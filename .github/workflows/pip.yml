@@ -38,6 +38,7 @@ jobs:
           -S zlib
           -B build/zlib
           -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_POSITION_INDEPENDENT_CODE=ON
           -DCMAKE_PREFIX_PATH=$PWD/local
           -DCMAKE_INSTALL_PREFIX=$PWD/local
       - name: Build ZLIB
