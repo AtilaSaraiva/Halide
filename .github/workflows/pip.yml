@@ -21,10 +21,28 @@ jobs:
           repository: llvm/llvm-project
           path: llvm-project
           # TODO: set the ref to match the major version of Halide
+      - uses: actions/checkout@v3
+        with:
+          repository: madler/zlib
+          path: zlib
+          ref: v1.2.12
       - name: Install dependencies
         run: |
           yum makecache
-          yum install -y ninja-build zlib-static
+          yum install -y ninja-build
+      - name: Configure ZLIB
+        run: >
+          cmake 
+          -G Ninja
+          -S zlib
+          -B build/zlib
+          -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_PREFIX_PATH=$PWD/local
+          -DCMAKE_INSTALL_PREFIX=$PWD/local
+      - name: Build ZLIB
+        run: |
+          cmake --build build/zlib --target install
+          find $PWD/local -name 'libz.so*' -delete
       - name: Configure LLVM
         run: >
           cmake
@@ -43,7 +61,6 @@ jobs:
           -DLLVM_ENABLE_RTTI=ON
           -DLLVM_ENABLE_TERMINFO=OFF
           -DLLVM_ENABLE_ZSTD=OFF
-          -DZLIB_LIBRARY=/usr/lib64/libz.a
       - name: Build LLVM
         run: cmake --build build/llvm --target install
       - name: Configure Halide
@@ -60,7 +77,6 @@ jobs:
           -DWITH_TESTS=NO
           -DWITH_TUTORIALS=NO
           -DWITH_UTILS=NO
-          -DZLIB_LIBRARY=/usr/lib64/libz.a
       - name: Build Halide
         run: cmake --build build/Halide --target install
       - name: Upload binary dependencies
