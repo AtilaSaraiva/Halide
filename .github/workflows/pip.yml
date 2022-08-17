@@ -26,10 +26,11 @@ jobs:
           repository: madler/zlib
           path: zlib
           ref: v1.2.12
-      - name: Install dependencies
+      - name: Install Ninja
         run: |
-          yum makecache
-          yum install -y ninja-build
+          curl -LO https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-linux.zip
+          unzip -o ninja-linux.zip -d /usr/local/bin
+          rm -f ninja-linux.zip
       - name: Configure ZLIB
         run: >
           cmake 
