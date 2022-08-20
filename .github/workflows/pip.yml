@@ -39,9 +39,6 @@ jobs:
     name: Build wheels (${{ matrix.python }})
     needs: build-halide
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
     container:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       credentials:
