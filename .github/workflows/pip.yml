@@ -8,7 +8,7 @@ concurrency:
   group: '${{ github.workflow }}-${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
 jobs:
-  build-binary-dependencies:
+  build-halide:
     name: Build Halide
     runs-on: ubuntu-latest
     permissions:
@@ -17,17 +17,9 @@ jobs:
     container: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
     steps:
       - uses: actions/checkout@v3
-      - name: Install Ninja
-        run: |
-          curl -LO https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-linux.zip
-          unzip -o ninja-linux.zip -d /usr/local/bin
-          rm -f ninja-linux.zip
       - name: Configure Halide
         run: >
-          cmake
-          -G Ninja
-          -S .
-          -B build
+          cmake -G Ninja -S . -B build
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_INSTALL_PREFIX=$PWD/local
           -DWITH_DOCS=NO
@@ -37,14 +29,14 @@ jobs:
           -DWITH_UTILS=NO
       - name: Build Halide
         run: cmake --build build --target install
-      - name: Upload binary dependencies
+      - name: Upload Halide binaries
         uses: actions/upload-artifact@v3
         with:
-          name: binary-dependencies
+          name: halide-bin
           path: local
   build-wheels:
     name: Build wheels (${{ matrix.python }})
-    needs: build-binary-dependencies
+    needs: build-halide
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -69,10 +61,10 @@ jobs:
           # - pp39-pypy39_pp73
     steps:
       - uses: actions/checkout@v3
-      - name: Download binary dependencies
+      - name: Download Halide binaries
         uses: actions/download-artifact@v3
         with:
-          name: binary-dependencies
+          name: halide-bin
       - name: Build wheels
         run: $PYTHON -m build python_bindings
         env:
