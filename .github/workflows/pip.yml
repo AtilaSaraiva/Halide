@@ -11,6 +11,9 @@ jobs:
   build-binary-dependencies:
     name: Build Halide
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     container: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
     steps:
       - uses: actions/checkout@v3
@@ -43,6 +46,9 @@ jobs:
     name: Build wheels (${{ matrix.python }})
     needs: build-binary-dependencies
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     container:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       env:
