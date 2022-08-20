@@ -9,78 +9,31 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-binary-dependencies:
-    name: Build LLVM & Halide
+    name: Build Halide
     runs-on: ubuntu-latest
-    container: quay.io/pypa/manylinux2014_x86_64
+    container: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: Halide
-      - uses: actions/checkout@v3
-        with:
-          repository: llvm/llvm-project
-          path: llvm-project
-          # TODO: set the ref to match the major version of Halide
-      - uses: actions/checkout@v3
-        with:
-          repository: madler/zlib
-          path: zlib
-          ref: v1.2.12
       - name: Install Ninja
         run: |
           curl -LO https://github.com/ninja-build/ninja/releases/download/v1.11.0/ninja-linux.zip
           unzip -o ninja-linux.zip -d /usr/local/bin
           rm -f ninja-linux.zip
-      - name: Configure ZLIB
-        run: >
-          cmake 
-          -G Ninja
-          -S zlib
-          -B build/zlib
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          -DCMAKE_PREFIX_PATH=$PWD/local
-          -DCMAKE_INSTALL_PREFIX=$PWD/local
-      - name: Build ZLIB
-        run: |
-          cmake --build build/zlib --target install
-          find $PWD/local -name 'libz.so*' -delete
-      - name: Configure LLVM
-        run: >
-          cmake
-          -G Ninja
-          -S llvm-project/llvm
-          -B build/llvm
-          -DCMAKE_BUILD_TYPE=Release
-          -DCMAKE_PREFIX_PATH=$PWD/local
-          -DCMAKE_INSTALL_PREFIX=$PWD/local
-          -DLLVM_ENABLE_PROJECTS="clang;lld"
-          -DLLVM_TARGETS_TO_BUILD="X86;ARM;NVPTX;AArch64;Mips;Hexagon;WebAssembly"
-          -DLLVM_BUILD_32_BITS=OFF
-          -DLLVM_ENABLE_ASSERTIONS=ON
-          -DLLVM_ENABLE_EH=ON
-          -DLLVM_ENABLE_LIBXML2=OFF
-          -DLLVM_ENABLE_RTTI=ON
-          -DLLVM_ENABLE_TERMINFO=OFF
-          -DLLVM_ENABLE_ZSTD=OFF
-      - name: Build LLVM
-        run: cmake --build build/llvm --target install
       - name: Configure Halide
         run: >
           cmake
           -G Ninja
-          -S Halide
-          -B build/Halide
+          -S .
+          -B build
           -DCMAKE_BUILD_TYPE=Release
           -DCMAKE_INSTALL_PREFIX=$PWD/local
-          -DCMAKE_PREFIX_PATH=$PWD/local
           -DWITH_DOCS=NO
           -DWITH_PYTHON_BINDINGS=NO
           -DWITH_TESTS=NO
           -DWITH_TUTORIALS=NO
           -DWITH_UTILS=NO
       - name: Build Halide
-        run: cmake --build build/Halide --target install
+        run: cmake --build build --target install
       - name: Upload binary dependencies
         uses: actions/upload-artifact@v3
         with:
@@ -91,7 +44,7 @@ jobs:
     needs: build-binary-dependencies
     runs-on: ubuntu-latest
     container:
-      image: quay.io/pypa/manylinux2014_x86_64
+      image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       env:
         PYTHON: /opt/python/${{ matrix.python }}/bin/python
     strategy:
@@ -110,13 +63,16 @@ jobs:
           # - pp39-pypy39_pp73
     steps:
       - uses: actions/checkout@v3
-        with:
-          path: Halide
       - name: Download binary dependencies
         uses: actions/download-artifact@v3
         with:
           name: binary-dependencies
       - name: Build wheels
-        run: $PYTHON -m build Halide/python_bindings
+        run: $PYTHON -m build python_bindings
         env:
           CMAKE_PREFIX_PATH: ${{ github.workspace }}/local
+      - name: Upload wheel
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: python_bindings/dist
