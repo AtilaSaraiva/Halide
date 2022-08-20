@@ -11,10 +11,11 @@ jobs:
   build-halide:
     name: Build Halide
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: read
-    container: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
+    container:
+      image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure Halide
@@ -43,6 +44,9 @@ jobs:
       packages: read
     container:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.github_token }}
       env:
         PYTHON: /opt/python/${{ matrix.python }}/bin/python
     strategy:
