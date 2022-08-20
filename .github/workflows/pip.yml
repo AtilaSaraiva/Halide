@@ -1,3 +1,7 @@
+# Relevant GHA docs links:
+# https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container
+# https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions#upgrading-a-workflow-that-accesses-ghcrio
+
 name: Build PyPI package
 on:
   push:
@@ -15,7 +19,7 @@ jobs:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.github_token }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - name: Configure Halide
@@ -43,7 +47,7 @@ jobs:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       credentials:
         username: ${{ github.actor }}
-        password: ${{ secrets.github_token }}
+        password: ${{ secrets.GITHUB_TOKEN }}
       env:
         PYTHON: /opt/python/${{ matrix.python }}/bin/python
     strategy:
