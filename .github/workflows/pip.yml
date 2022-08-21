@@ -68,6 +68,7 @@ jobs:
         PYTHON: /opt/python/${{ matrix.python }}/bin/python
 
     strategy:
+      fail-fast: false
       matrix:
         python:
           # The following list is exhaustive, but the commented ABIs are
@@ -93,6 +94,9 @@ jobs:
       - name: Untar Halide binaries
         run: tar xvf halide-bin.tar
 
+      - name: Weird hack?
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       - name: Build wheels
         run: |
           export CMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/local
@@ -103,4 +107,3 @@ jobs:
         with:
           name: packages
           path: python_bindings/dist
-
