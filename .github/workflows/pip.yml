@@ -3,25 +3,32 @@
 # https://docs.github.com/en/packages/managing-github-packages-using-github-actions-workflows/publishing-and-installing-a-package-with-github-actions#upgrading-a-workflow-that-accesses-ghcrio
 
 name: Build PyPI package
+
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+
 concurrency:
   group: '${{ github.workflow }}-${{ github.event.pull_request.head.label || github.head_ref || github.ref }}'
   cancel-in-progress: true
+
 jobs:
   build-halide:
     name: Build Halide
+
     runs-on: ubuntu-latest
+
     container:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Configure Halide
         run: >
           cmake -G Ninja -S . -B build
@@ -32,17 +39,26 @@ jobs:
           -DWITH_TESTS=NO
           -DWITH_TUTORIALS=NO
           -DWITH_UTILS=NO
+
       - name: Build Halide
         run: cmake --build build --target install
+
+      - name: Tar Halide binaries
+        run: tar cvf halide-bin.tar ./local
+
       - name: Upload Halide binaries
         uses: actions/upload-artifact@v3
         with:
           name: halide-bin
-          path: local
+          path: halide-bin.tar
+
   build-wheels:
     name: Build wheels (${{ matrix.python }})
+
     needs: build-halide
+
     runs-on: ubuntu-latest
+
     container:
       image: ghcr.io/halide/manylinux2014_x86_64-llvm:14.0.6
       credentials:
@@ -50,6 +66,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
       env:
         PYTHON: /opt/python/${{ matrix.python }}/bin/python
+
     strategy:
       matrix:
         python:
@@ -64,18 +81,26 @@ jobs:
           # - pp37-pypy37_pp73
           # - pp38-pypy38_pp73
           # - pp39-pypy39_pp73
+
     steps:
       - uses: actions/checkout@v3
+
       - name: Download Halide binaries
         uses: actions/download-artifact@v3
         with:
           name: halide-bin
+
+      - name: Untar Halide binaries
+        with: tar xvf halide-bin.tar
+
       - name: Build wheels
-        run: $PYTHON -m build python_bindings
-        env:
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/local
+        run: |
+          export CMAKE_PREFIX_PATH=$GITHUB_WORKSPACE/local
+          $PYTHON -m build python_bindings
+
       - name: Upload wheel
         uses: actions/upload-artifact@v3
         with:
           name: packages
           path: python_bindings/dist
+
