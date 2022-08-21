@@ -91,7 +91,7 @@ jobs:
           name: halide-bin
 
       - name: Untar Halide binaries
-        with: tar xvf halide-bin.tar
+        run: tar xvf halide-bin.tar
 
       - name: Build wheels
         run: |
